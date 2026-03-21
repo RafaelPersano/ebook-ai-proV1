@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import html2pdf from "html2pdf.js";
 
 export default function Home() {
   const [draft, setDraft] = useState("");
@@ -21,8 +20,14 @@ export default function Home() {
     setLoading(false);
   };
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
+    // 👇 GARANTE que roda só no browser
+    if (typeof window === "undefined") return;
+
+    const html2pdf = (await import("html2pdf.js")).default;
+
     const element = document.getElementById("ebook");
+    if (!element) return;
 
     html2pdf()
       .from(element)
@@ -43,10 +48,10 @@ export default function Home() {
         onChange={(e) => setDraft(e.target.value)}
         placeholder="Digite seu rascunho..."
         rows={8}
-        style={{ width: "100%" }}
+        style={{ width: "100%", marginBottom: 10 }}
       />
 
-      <button onClick={generateEbook}>
+      <button onClick={generateEbook} style={{ marginBottom: 10 }}>
         {loading ? "Gerando..." : "Gerar Ebook"}
       </button>
 
@@ -56,7 +61,12 @@ export default function Home() {
 
           <div
             id="ebook"
-            style={{ background: "#fff", padding: 20, marginTop: 20 }}
+            style={{
+              background: "#fff",
+              padding: 20,
+              marginTop: 20,
+              borderRadius: 8,
+            }}
             dangerouslySetInnerHTML={{ __html: ebook }}
           />
         </>
