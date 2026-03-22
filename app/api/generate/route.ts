@@ -33,12 +33,10 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
-    // 🔥 MOSTRAR ERRO REAL
-    console.log("ERRO REAL:", data);
-
+    // 🔥 MOSTRAR ERRO COMPLETO
     if (!response.ok) {
       return Response.json({
-        error: data
+        error: JSON.stringify(data, null, 2)
       });
     }
 
