@@ -1,137 +1,110 @@
 export async function POST(req: Request) {
+
   try {
-    const { draft } = await req.json();
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const {
+      topic,
+      author,
+      title
+    } = await req.json();
 
-    if (!apiKey) {
-      return Response.json({
-        error: "OPENROUTER_API_KEY não configurada"
-      });
-    }
+    const apiKey =
+      process.env.OPENROUTER_API_KEY;
 
-    // 🎨 GERAR CAPA
-    const imageResponse = await fetch(
-      "https://openrouter.ai/api/v1/images/generations",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/dall-e-3",
-          prompt: `Professional ebook cover, modern design, clean typography, title about: ${draft}`,
-          size: "1024x1792"
-        }),
-      }
-    );
+    // 🎨 CAPA
 
-    const imageData = await imageResponse.json();
+    const coverRes =
+      await fetch(
+        "https://openrouter.ai/api/v1/images/generations",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "openai/dall-e-3",
+            prompt: `
+Professional bestselling ebook cover.
 
-    const coverUrl =
-      imageData?.data?.[0]?.url ||
-      "https://placehold.co/1024x1792?text=Ebook+Cover";
+Title: ${title}
 
-    // 🧠 GERAR EBOOK PROFISSIONAL
-    const textResponse = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-4o-mini",
+Topic: ${topic}
 
-          messages: [
-            {
-              role: "user",
-              content: `
-Você é um escritor profissional especialista em ebooks virais.
+Minimalist modern design.
+`,
+            size: "1024x1792"
+          })
+        }
+      );
 
-Crie um ebook COMPLETO e PROFUNDO em HTML.
+    const coverData =
+      await coverRes.json();
 
-REQUISITOS OBRIGATÓRIOS:
+    const cover =
+      coverData?.data?.[0]?.url;
 
-- Título forte e chamativo
-- Subtítulo profissional
-- Introdução envolvente
-- 6 a 8 capítulos
-- Cada capítulo com 800 a 1200 palavras
-- Conteúdo profundo
-- Exemplos reais
-- Listas práticas
+    // 🧠 TEXTO PROFUNDO
+
+    const textRes =
+      await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "openai/gpt-4o-mini",
+            messages: [
+              {
+                role: "user",
+                content: `
+Crie um ebook BESTSELLER profissional.
+
+TÍTULO:
+${title}
+
+AUTOR:
+${author}
+
+TEMA:
+${topic}
+
+REQUISITOS:
+
+- 8 capítulos profundos
+- Introdução forte
+- Sumário
+- Conclusão
+- Linguagem profissional
+- Narrativa envolvente
+- Exemplos práticos
 - Dicas acionáveis
-- Conclusão poderosa
-- Chamada para ação final
 
-FORMATAÇÃO HTML:
+FORMATO HTML.
 
-Crie:
+Inclua:
 
-<h1>Título do Ebook</h1>
-
-<h2>Subtítulo</h2>
-
-<h2>Introdução</h2>
-
-Depois:
-
-<h2>Sumário</h2>
-
-<ul>
-<li><a href="#cap1">Capítulo 1</a></li>
-<li><a href="#cap2">Capítulo 2</a></li>
-<li><a href="#cap3">Capítulo 3</a></li>
-<li><a href="#cap4">Capítulo 4</a></li>
-<li><a href="#cap5">Capítulo 5</a></li>
-<li><a href="#cap6">Capítulo 6</a></li>
-</ul>
-
-Depois escreva:
-
-<h2 id="cap1">Capítulo 1</h2>
-
-(conteúdo profundo)
-
-<div style="page-break-after: always;"></div>
-
-<h2 id="cap2">Capítulo 2</h2>
-
-(conteúdo profundo)
-
-<div style="page-break-after: always;"></div>
-
-Continue até:
-
-Conclusão  
-Chamada para ação
-
-TEMA DO EBOOK:
-
-${draft}
+- Rodapé com paginação
+- Numeração de páginas
+- Layout estilo livro
 
 `
-            }
-          ],
-        }),
-      }
-    );
+              }
+            ]
+          })
+        }
+      );
 
-    const textData = await textResponse.json();
+    const textData =
+      await textRes.json();
 
-    if (!textResponse.ok) {
-      return Response.json({
-        error: textData
-      });
-    }
+    const content =
+      textData.choices[0]
+        .message.content;
 
-    const ebookContent =
-      textData?.choices?.[0]?.message?.content;
-
-    // 🎨 HTML FINAL PROFISSIONAL
     const finalHTML = `
 
 <div style="
@@ -143,52 +116,37 @@ font-size:18px;
 color:#333;
 ">
 
-<img src="${coverUrl}" 
-style="
+<img src="${cover}" style="
 width:100%;
-border-radius:12px;
 margin-bottom:40px;
+border-radius:12px;
 "/>
 
-<style>
-
-h1 {
-font-size:42px;
+<h3 style="
 text-align:center;
-margin-bottom:30px;
-}
+margin-bottom:40px;
+">
+Autor: ${author}
+</h3>
 
-h2 {
-font-size:28px;
-margin-top:50px;
-border-bottom:2px solid #eee;
-padding-bottom:10px;
-}
+${content}
 
-p {
-margin-bottom:20px;
-}
-
-ul {
-margin-left:20px;
-}
-
-footer {
+<footer style="
 margin-top:60px;
-font-size:14px;
-text-align:center;
-color:#888;
-border-top:1px solid #eee;
+border-top:1px solid #ccc;
 padding-top:20px;
-}
+text-align:center;
+font-size:14px;
+color:#888;
+">
 
-</style>
+Página <span class="pageNumber"></span>
 
-${ebookContent}
+<br/>
 
-<footer>
-© ${new Date().getFullYear()} Ebook AI PRO  
-Criado automaticamente com Inteligência Artificial
+© ${new Date().getFullYear()}  
+${author}
+
 </footer>
 
 </div>
@@ -200,8 +158,11 @@ Criado automaticamente com Inteligência Artificial
     });
 
   } catch (error: any) {
+
     return Response.json({
       error: error.message
     });
+
   }
+
 }
