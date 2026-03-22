@@ -6,6 +6,7 @@ export default function Home() {
 
   const [topic, setTopic] = useState("");
   const [author, setAuthor] = useState("");
+  const [style, setStyle] = useState("business");
   const [titles, setTitles] = useState("");
   const [ebook, setEbook] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,9 +17,7 @@ export default function Home() {
 
     const res = await fetch("/api/titles", {
       method: "POST",
-      body: JSON.stringify({
-        topic
-      })
+      body: JSON.stringify({ topic })
     });
 
     const data = await res.json();
@@ -37,6 +36,7 @@ export default function Home() {
       body: JSON.stringify({
         topic,
         author,
+        style,
         title: titles
       })
     });
@@ -54,13 +54,13 @@ export default function Home() {
       document.getElementById("ebook");
 
     const opt = {
-      margin: 0.5,
+      margin: 10,
       filename: "ebook-profissional.pdf",
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: {
-        unit: "in",
-        format: "letter",
+        unit: "mm",
+        format: "a4",
         orientation: "portrait"
       }
     };
@@ -73,7 +73,7 @@ export default function Home() {
 
     <main style={{ padding: 40 }}>
 
-      <h1>📚 Gerador de Ebook Profissional</h1>
+      <h1>📚 Gerador Profissional de Ebook</h1>
 
       <input
         placeholder="Tema do Ebook"
@@ -100,6 +100,34 @@ export default function Home() {
           marginTop: 10
         }}
       />
+
+      {/* ESTILO EDITORIAL */}
+
+      <select
+        value={style}
+        onChange={(e) =>
+          setStyle(e.target.value)
+        }
+        style={{
+          width: "100%",
+          padding: 12,
+          marginTop: 10
+        }}
+      >
+
+        <option value="business">
+          Business (Executivo)
+        </option>
+
+        <option value="modern">
+          Moderno
+        </option>
+
+        <option value="academic">
+          Acadêmico
+        </option>
+
+      </select>
 
       <button
         onClick={generateTitles}
@@ -167,8 +195,7 @@ export default function Home() {
 
       )}
 
-      {/* SCRIPT PDF */}
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     </main>
 

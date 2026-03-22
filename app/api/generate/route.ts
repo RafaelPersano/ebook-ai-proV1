@@ -4,16 +4,20 @@ export async function POST(req: Request) {
 
     const {
       topic,
-      author
+      author,
+      style,
+      title
     } = await req.json();
 
     const apiKey =
       process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
+
       return Response.json({
-        error: "API Key não configurada"
+        error: "API Key não encontrada"
       });
+
     }
 
     /* 🎯 GERAR TÍTULO PROFISSIONAL */
@@ -28,68 +32,40 @@ export async function POST(req: Request) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "openai/gpt-4o-mini",
+
+            model: "google/gemini-2.5-pro",
+
             messages: [
+
               {
                 role: "user",
                 content: `
-Crie um título BESTSELLER profissional para um ebook sobre:
+Crie um título profissional e altamente vendável para um ebook sobre:
 
 ${topic}
 
-O título deve ser:
-- chamativo
-- vendável
-- moderno
+O título deve parecer um best-seller.
+Retorne apenas o título.
 `
               }
+
             ]
+
           })
+
         }
+
       );
 
     const titleData =
       await titleRes.json();
 
-    const title =
-      titleData.choices[0]
-        .message.content;
+    const finalTitle =
+      titleData.choices?.[0]
+        ?.message?.content
+        || title;
 
-    /* 🎨 CAPA */
-
-    const coverRes =
-      await fetch(
-        "https://openrouter.ai/api/v1/images/generations",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: "openai/dall-e-3",
-            prompt: `
-Professional ebook cover.
-
-Title: ${title}
-
-Modern design.
-Clean typography.
-Minimalist style.
-Best seller visual.
-`,
-            size: "1024x1792"
-          })
-        }
-      );
-
-    const coverData =
-      await coverRes.json();
-
-    const cover =
-      coverData?.data?.[0]?.url;
-
-    /* 📖 TEXTO PROFISSIONAL */
+    /* 📖 GERAR EBOOK PROFUNDO */
 
     const textRes =
       await fetch(
@@ -101,12 +77,15 @@ Best seller visual.
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "openai/gpt-4o-mini",
+
+            model: "google/gemini-2.5-pro",
+
             messages: [
+
               {
                 role: "user",
                 content: `
-Crie um ebook profissional para venda digital.
+Crie um ebook profissional profundo.
 
 TEMA:
 ${topic}
@@ -114,18 +93,45 @@ ${topic}
 AUTOR:
 ${author}
 
-REQUISITOS:
+ESTILO:
+${style}
 
-- 6 capítulos
-- Cada capítulo com:
-  - 3 parágrafos completos
-  - linguagem profissional
-  - dados atualizados de mercado
-  - exemplos reais
-- Criar Introdução
-- Criar Sumário
-- Criar Conclusão
-- Criar Chamada para ação
+REQUISITOS OBRIGATÓRIOS:
+
+Criar:
+
+✔ Introdução profissional
+
+✔ 6 capítulos
+
+Cada capítulo deve ter:
+
+- 3 parágrafos longos
+- entre 180 e 250 palavras cada
+- exemplos reais de mercado
+- estudos de caso
+- análises estratégicas
+
+Incluir:
+
+✔ Tabelas financeiras reais
+✔ Gráficos em SVG
+✔ Dados atuais de mercado
+✔ Tendências recentes
+✔ Referências reais
+
+Adicionar:
+
+<h2>Bibliografia</h2>
+
+Com fontes reais como:
+
+- McKinsey
+- Gartner
+- Statista
+- Harvard Business Review
+- Deloitte
+- World Economic Forum
 
 FORMATO:
 
@@ -133,144 +139,190 @@ HTML PROFISSIONAL.
 
 Cada capítulo:
 
-<h2>Capítulo</h2>
+<h2>Capítulo X</h2>
 
-3 parágrafos completos.
+Depois:
 
-Não usar textos curtos.
+Inserir:
+
+<img class="chapter-image"/>
+
+Depois:
+
+3 parágrafos longos.
+
+Depois:
+
+Inserir tabela.
+
+Depois:
+
+Inserir gráfico SVG.
 
 `
               }
+
             ]
+
           })
+
         }
+
       );
 
     const textData =
       await textRes.json();
 
+    if (!textData.choices) {
+
+      return Response.json({
+        error: textData
+      });
+
+    }
+
     const content =
       textData.choices[0]
         .message.content;
 
-    /* 🖼️ ILUSTRAÇÃO POR CAPÍTULO */
+    /* 🎨 CAPA */
 
-    const chapterImages = [];
-
-    for (let i = 1; i <= 6; i++) {
-
-      const imgRes =
-        await fetch(
-          "https://openrouter.ai/api/v1/images/generations",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              model: "openai/dall-e-3",
-              prompt: `
-Vector illustration.
-
-Topic: ${topic}
-
-Chapter ${i}
-
-Flat design.
-Minimalist.
-Professional ebook illustration.
-`,
-              size: "1024x1024"
-            })
-          }
-        );
-
-      const imgData =
-        await imgRes.json();
-
-      chapterImages.push(
-        imgData?.data?.[0]?.url
-      );
-
-    }
+    const coverUrl =
+      `https://placehold.co/1024x1792?text=${encodeURIComponent(finalTitle)}`;
 
     /* 📘 LAYOUT EDITORIAL */
 
     const finalHTML = `
 
-<div style="
-max-width:760px;
-margin:auto;
-font-family: 'Georgia', serif;
-line-height:1.8;
-font-size:18px;
-color:#333;
-padding:60px;
-">
+<style>
 
-<!-- CAPA -->
+body {
 
-<img src="${cover}"
+font-family: Georgia, serif;
+line-height: 1.9;
+font-size: 18px;
+color: #333;
+
+}
+
+h1 {
+
+font-size: 42px;
+text-align: center;
+margin-top: 80px;
+
+}
+
+h2 {
+
+margin-top: 60px;
+page-break-before: always;
+
+}
+
+p {
+
+text-align: justify;
+
+orphans: 3;
+widows: 3;
+
+}
+
+.chapter-image {
+
+width: 100%;
+margin: 30px 0;
+
+}
+
+table {
+
+width: 100%;
+border-collapse: collapse;
+margin-top: 20px;
+
+}
+
+td, th {
+
+border: 1px solid #ccc;
+padding: 10px;
+
+}
+
+svg {
+
+width: 100%;
+margin-top: 20px;
+
+}
+
+footer {
+
+position: fixed;
+bottom: 10mm;
+text-align: center;
+font-size: 12px;
+color: #777;
+
+}
+
+.cover {
+
+page-break-after: always;
+
+}
+
+</style>
+
+<div class="cover">
+
+<img src="${coverUrl}"
 style="
 width:100%;
-margin-bottom:50px;
 border-radius:10px;
-"/>
+"
+/>
 
-<h1 style="
-text-align:center;
-font-size:42px;
-margin-bottom:10px;
-">
-${title}
+<h1>
+
+${finalTitle}
+
 </h1>
 
-<p style="
-text-align:center;
-font-size:18px;
-color:#777;
-">
+<p style="text-align:center;">
+
 Autor: ${author}
+
 </p>
 
-<hr/>
-
-<!-- CONTEÚDO -->
+</div>
 
 ${content}
 
-<footer style="
-margin-top:60px;
-padding-top:20px;
-border-top:1px solid #ddd;
-font-size:14px;
-text-align:center;
-color:#888;
-page-break-inside: avoid;
-">
+<footer>
 
 Página <span class="pageNumber"></span>
 
-<br/>
-
-© ${new Date().getFullYear()}
-${author}
-
 </footer>
-
-</div>
 
 `;
 
     return Response.json({
+
       ebook: finalHTML
+
     });
 
-  } catch (error: any) {
+  }
+
+  catch (error: any) {
 
     return Response.json({
+
       error: error.message
+
     });
 
   }
