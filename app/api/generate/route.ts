@@ -6,7 +6,7 @@ export async function POST(req: Request) {
 
     if (!apiKey) {
       return Response.json({
-        error: "API KEY não configurada"
+        error: "OPENROUTER_API_KEY não configurada"
       });
     }
 
@@ -19,24 +19,13 @@ export async function POST(req: Request) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // 🔥 MODELO SEGURO
           model: "openai/gpt-4o-mini",
 
           messages: [
             {
               role: "user",
-              content: `
-Crie um ebook em HTML com:
-
-- Título
-- Introdução
-- 3 capítulos
-- Conclusão
-
-Tema:
-${draft}
-              `,
-            },
+              content: `Crie um ebook em HTML sobre:\n${draft}`
+            }
           ],
         }),
       }
@@ -44,7 +33,8 @@ ${draft}
 
     const data = await response.json();
 
-    console.log("Resposta OpenRouter:", data);
+    // 🔥 MOSTRAR ERRO REAL
+    console.log("ERRO REAL:", data);
 
     if (!response.ok) {
       return Response.json({
