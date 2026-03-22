@@ -20,75 +20,17 @@ export async function POST(req: Request) {
 
     }
 
-    /* 🎯 GERAR TÍTULO PROFISSIONAL */
+    /* 📘 PROMPT PROFISSIONAL */
 
-    const titleRes =
-      await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
+    const prompt = `
 
-            model: "google/gemini-2.5-pro",
-
-            messages: [
-
-              {
-                role: "user",
-                content: `
-Crie um título profissional e altamente vendável para um ebook sobre:
-
-${topic}
-
-O título deve parecer um best-seller.
-Retorne apenas o título.
-`
-              }
-
-            ]
-
-          })
-
-        }
-
-      );
-
-    const titleData =
-      await titleRes.json();
-
-    const finalTitle =
-      titleData.choices?.[0]
-        ?.message?.content
-        || title;
-
-    /* 📖 GERAR EBOOK PROFUNDO */
-
-    const textRes =
-      await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-
-            model: "google/gemini-2.5-pro",
-
-            messages: [
-
-              {
-                role: "user",
-                content: `
-Crie um ebook profissional profundo.
+Crie um ebook PROFISSIONAL COMPLETO para venda online.
 
 TEMA:
 ${topic}
+
+TÍTULO:
+${title}
 
 AUTOR:
 ${author}
@@ -96,70 +38,140 @@ ${author}
 ESTILO:
 ${style}
 
-REQUISITOS OBRIGATÓRIOS:
+O ebook deve parecer um BEST-SELLER profissional vendido na Hotmart.
+
+---
+
+ESTRUTURA OBRIGATÓRIA:
+
+1️⃣ CAPA
+
+Criar título forte.
+Criar subtítulo profissional.
+
+---
+
+2️⃣ SUMÁRIO
+
+Criar sumário estruturado com:
+
+Introdução  
+Capítulo 1  
+Capítulo 2  
+Capítulo 3  
+Capítulo 4  
+Capítulo 5  
+Capítulo 6  
+Conclusão  
+Bibliografia  
+
+---
+
+3️⃣ INTRODUÇÃO
+
+4 parágrafos completos  
+Explicando:
+
+- problema do mercado
+- oportunidade
+- importância do tema
+- o que o leitor aprenderá
+
+---
+
+4️⃣ CAPÍTULOS
 
 Criar:
 
-✔ Introdução profissional
+6 capítulos completos.
 
-✔ 6 capítulos
+Cada capítulo deve conter:
 
-Cada capítulo deve ter:
+✔ Título forte  
+✔ Ilustração SVG no topo  
+✔ 3 parágrafos longos  
+(180–250 palavras cada)
 
-- 3 parágrafos longos
-- entre 180 e 250 palavras cada
-- exemplos reais de mercado
-- estudos de caso
-- análises estratégicas
+✔ Exemplo real  
+✔ Estudo de caso  
+✔ Dados atuais de mercado  
 
-Incluir:
+✔ Tabela financeira real  
+✔ Gráfico SVG com dados  
 
-✔ Tabelas financeiras reais
-✔ Gráficos em SVG
-✔ Dados atuais de mercado
-✔ Tendências recentes
-✔ Referências reais
+---
 
-Adicionar:
+5️⃣ CONCLUSÃO
 
-<h2>Bibliografia</h2>
+3 parágrafos fortes.
 
-Com fontes reais como:
+---
+
+6️⃣ BIBLIOGRAFIA
+
+Citar fontes reais:
 
 - McKinsey
 - Gartner
 - Statista
-- Harvard Business Review
 - Deloitte
+- Harvard Business Review
 - World Economic Forum
+
+---
 
 FORMATO:
 
-HTML PROFISSIONAL.
+Retornar HTML PROFISSIONAL.
 
-Cada capítulo:
+Usar:
 
-<h2>Capítulo X</h2>
+<h1>
+<h2>
+<p>
+<table>
+<svg>
 
-Depois:
+Criar:
 
-Inserir:
+✔ Ilustrações SVG  
+✔ Gráficos SVG  
+✔ Tabelas HTML  
 
-<img class="chapter-image"/>
+`;
 
-Depois:
+    /* 📡 CHAMADA GEMINI */
 
-3 parágrafos longos.
+    const response =
+      await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
 
-Depois:
+          headers: {
 
-Inserir tabela.
+            Authorization:
+              `Bearer ${apiKey}`,
 
-Depois:
+            "Content-Type":
+              "application/json"
 
-Inserir gráfico SVG.
+          },
 
-`
+          body: JSON.stringify({
+
+            model:
+              "google/gemini-2.5-pro",
+
+            temperature: 0.7,
+
+            max_tokens: 12000,
+
+            messages: [
+
+              {
+                role: "user",
+                content: prompt
               }
 
             ]
@@ -170,25 +182,27 @@ Inserir gráfico SVG.
 
       );
 
-    const textData =
-      await textRes.json();
+    const data =
+      await response.json();
 
-    if (!textData.choices) {
+    if (!data.choices) {
+
+      console.error(data);
 
       return Response.json({
-        error: textData
+        error: data
       });
 
     }
 
     const content =
-      textData.choices[0]
+      data.choices[0]
         .message.content;
 
-    /* 🎨 CAPA */
+    /* 🎨 CAPA AUTOMÁTICA */
 
-    const coverUrl =
-      `https://placehold.co/1024x1792?text=${encodeURIComponent(finalTitle)}`;
+    const cover =
+      `https://placehold.co/1024x1792/png?text=${encodeURIComponent(title)}`;
 
     /* 📘 LAYOUT EDITORIAL */
 
@@ -203,6 +217,8 @@ line-height: 1.9;
 font-size: 18px;
 color: #333;
 
+margin: 40px;
+
 }
 
 h1 {
@@ -216,6 +232,7 @@ margin-top: 80px;
 h2 {
 
 margin-top: 60px;
+
 page-break-before: always;
 
 }
@@ -229,7 +246,7 @@ widows: 3;
 
 }
 
-.chapter-image {
+img {
 
 width: 100%;
 margin: 30px 0;
@@ -258,19 +275,29 @@ margin-top: 20px;
 
 }
 
-footer {
-
-position: fixed;
-bottom: 10mm;
-text-align: center;
-font-size: 12px;
-color: #777;
-
-}
-
 .cover {
 
 page-break-after: always;
+
+}
+
+.toc {
+
+page-break-after: always;
+
+}
+
+footer {
+
+position: fixed;
+
+bottom: 10mm;
+
+text-align: center;
+
+font-size: 12px;
+
+color: #777;
 
 }
 
@@ -278,24 +305,33 @@ page-break-after: always;
 
 <div class="cover">
 
-<img src="${coverUrl}"
-style="
-width:100%;
-border-radius:10px;
-"
-/>
+<img src="${cover}" />
 
-<h1>
-
-${finalTitle}
-
-</h1>
+<h1>${title}</h1>
 
 <p style="text-align:center;">
-
 Autor: ${author}
-
 </p>
+
+</div>
+
+<div class="toc">
+
+<h2>Sumário</h2>
+
+<ol>
+
+<li>Introdução</li>
+<li>Capítulo 1</li>
+<li>Capítulo 2</li>
+<li>Capítulo 3</li>
+<li>Capítulo 4</li>
+<li>Capítulo 5</li>
+<li>Capítulo 6</li>
+<li>Conclusão</li>
+<li>Bibliografia</li>
+
+</ol>
 
 </div>
 
@@ -319,9 +355,12 @@ Página <span class="pageNumber"></span>
 
   catch (error: any) {
 
+    console.error(error);
+
     return Response.json({
 
-      error: error.message
+      error:
+        error.message
 
     });
 
