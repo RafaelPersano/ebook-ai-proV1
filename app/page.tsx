@@ -10,23 +10,45 @@ export default function Home() {
   const generateEbook = async () => {
     setLoading(true);
 
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      body: JSON.stringify({ draft }),
-    });
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
 
-    const data = await res.json();
-    setEbook(data.ebook);
+        // 🔥 ESSENCIAL
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          draft: draft,
+        }),
+      });
+
+      const data = await res.json();
+
+      console.log("Resposta API:", data);
+
+      if (data.ebook) {
+        setEbook(data.ebook);
+      } else {
+        alert("Erro ao gerar ebook");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Erro na requisição");
+    }
+
     setLoading(false);
   };
 
   const downloadPDF = async () => {
-    // 👇 GARANTE que roda só no browser
     if (typeof window === "undefined") return;
 
     const html2pdf = (await import("html2pdf.js")).default;
 
     const element = document.getElementById("ebook");
+
     if (!element) return;
 
     html2pdf()
@@ -40,24 +62,37 @@ export default function Home() {
   };
 
   return (
-    <main style={{ maxWidth: 900, margin: "auto", padding: 20 }}>
+    <main
+      style={{
+        maxWidth: 900,
+        margin: "auto",
+        padding: 20,
+        fontFamily: "Arial",
+      }}
+    >
       <h1>📚 Ebook AI PRO</h1>
 
       <textarea
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         placeholder="Digite seu rascunho..."
-        rows={8}
-        style={{ width: "100%", marginBottom: 10 }}
+        rows={10}
+        style={{
+          width: "100%",
+          padding: 10,
+          marginBottom: 10,
+        }}
       />
 
-      <button onClick={generateEbook} style={{ marginBottom: 10 }}>
+      <button onClick={generateEbook}>
         {loading ? "Gerando..." : "Gerar Ebook"}
       </button>
 
       {ebook && (
         <>
-          <button onClick={downloadPDF}>📄 Baixar PDF</button>
+          <button onClick={downloadPDF}>
+            📄 Baixar PDF
+          </button>
 
           <div
             id="ebook"
@@ -67,7 +102,9 @@ export default function Home() {
               marginTop: 20,
               borderRadius: 8,
             }}
-            dangerouslySetInnerHTML={{ __html: ebook }}
+            dangerouslySetInnerHTML={{
+              __html: ebook,
+            }}
           />
         </>
       )}
