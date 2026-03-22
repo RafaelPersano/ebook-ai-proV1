@@ -2,13 +2,11 @@ export async function POST(req: Request) {
   try {
     const { draft } = await req.json();
 
-    console.log("Draft recebido:", draft);
-
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
       return Response.json({
-        error: "OPENROUTER_API_KEY não encontrada"
+        error: "API KEY não configurada"
       });
     }
 
@@ -21,12 +19,24 @@ export async function POST(req: Request) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          // 🔥 MODELO SEGURO
+          model: "openai/gpt-4o-mini",
+
           messages: [
             {
               role: "user",
-              content: `Crie um ebook em HTML baseado neste texto:\n\n${draft}`
-            }
+              content: `
+Crie um ebook em HTML com:
+
+- Título
+- Introdução
+- 3 capítulos
+- Conclusão
+
+Tema:
+${draft}
+              `,
+            },
           ],
         }),
       }
@@ -47,8 +57,6 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error("Erro interno:", error);
-
     return Response.json({
       error: error.message
     });
