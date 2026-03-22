@@ -4,14 +4,58 @@ export async function POST(req: Request) {
 
     const {
       topic,
-      author,
-      title
+      author
     } = await req.json();
 
     const apiKey =
       process.env.OPENROUTER_API_KEY;
 
-    // 🎨 CAPA
+    if (!apiKey) {
+      return Response.json({
+        error: "API Key não configurada"
+      });
+    }
+
+    /* 🎯 GERAR TÍTULO PROFISSIONAL */
+
+    const titleRes =
+      await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "openai/gpt-4o-mini",
+            messages: [
+              {
+                role: "user",
+                content: `
+Crie um título BESTSELLER profissional para um ebook sobre:
+
+${topic}
+
+O título deve ser:
+- chamativo
+- vendável
+- moderno
+`
+              }
+            ]
+          })
+        }
+      );
+
+    const titleData =
+      await titleRes.json();
+
+    const title =
+      titleData.choices[0]
+        .message.content;
+
+    /* 🎨 CAPA */
 
     const coverRes =
       await fetch(
@@ -25,13 +69,14 @@ export async function POST(req: Request) {
           body: JSON.stringify({
             model: "openai/dall-e-3",
             prompt: `
-Professional bestselling ebook cover.
+Professional ebook cover.
 
 Title: ${title}
 
-Topic: ${topic}
-
-Minimalist modern design.
+Modern design.
+Clean typography.
+Minimalist style.
+Best seller visual.
 `,
             size: "1024x1792"
           })
@@ -44,7 +89,7 @@ Minimalist modern design.
     const cover =
       coverData?.data?.[0]?.url;
 
-    // 🧠 TEXTO PROFUNDO
+    /* 📖 TEXTO PROFISSIONAL */
 
     const textRes =
       await fetch(
@@ -61,35 +106,38 @@ Minimalist modern design.
               {
                 role: "user",
                 content: `
-Crie um ebook BESTSELLER profissional.
-
-TÍTULO:
-${title}
-
-AUTOR:
-${author}
+Crie um ebook profissional para venda digital.
 
 TEMA:
 ${topic}
 
+AUTOR:
+${author}
+
 REQUISITOS:
 
-- 8 capítulos profundos
-- Introdução forte
-- Sumário
-- Conclusão
-- Linguagem profissional
-- Narrativa envolvente
-- Exemplos práticos
-- Dicas acionáveis
+- 6 capítulos
+- Cada capítulo com:
+  - 3 parágrafos completos
+  - linguagem profissional
+  - dados atualizados de mercado
+  - exemplos reais
+- Criar Introdução
+- Criar Sumário
+- Criar Conclusão
+- Criar Chamada para ação
 
-FORMATO HTML.
+FORMATO:
 
-Inclua:
+HTML PROFISSIONAL.
 
-- Rodapé com paginação
-- Numeração de páginas
-- Layout estilo livro
+Cada capítulo:
+
+<h2>Capítulo</h2>
+
+3 parágrafos completos.
+
+Não usar textos curtos.
 
 `
               }
@@ -105,46 +153,108 @@ Inclua:
       textData.choices[0]
         .message.content;
 
+    /* 🖼️ ILUSTRAÇÃO POR CAPÍTULO */
+
+    const chapterImages = [];
+
+    for (let i = 1; i <= 6; i++) {
+
+      const imgRes =
+        await fetch(
+          "https://openrouter.ai/api/v1/images/generations",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: "openai/dall-e-3",
+              prompt: `
+Vector illustration.
+
+Topic: ${topic}
+
+Chapter ${i}
+
+Flat design.
+Minimalist.
+Professional ebook illustration.
+`,
+              size: "1024x1024"
+            })
+          }
+        );
+
+      const imgData =
+        await imgRes.json();
+
+      chapterImages.push(
+        imgData?.data?.[0]?.url
+      );
+
+    }
+
+    /* 📘 LAYOUT EDITORIAL */
+
     const finalHTML = `
 
 <div style="
-max-width:800px;
+max-width:760px;
 margin:auto;
-font-family:Georgia, serif;
+font-family: 'Georgia', serif;
 line-height:1.8;
 font-size:18px;
 color:#333;
+padding:60px;
 ">
 
-<img src="${cover}" style="
+<!-- CAPA -->
+
+<img src="${cover}"
+style="
 width:100%;
-margin-bottom:40px;
-border-radius:12px;
+margin-bottom:50px;
+border-radius:10px;
 "/>
 
-<h3 style="
+<h1 style="
 text-align:center;
-margin-bottom:40px;
+font-size:42px;
+margin-bottom:10px;
+">
+${title}
+</h1>
+
+<p style="
+text-align:center;
+font-size:18px;
+color:#777;
 ">
 Autor: ${author}
-</h3>
+</p>
+
+<hr/>
+
+<!-- CONTEÚDO -->
 
 ${content}
 
 <footer style="
 margin-top:60px;
-border-top:1px solid #ccc;
 padding-top:20px;
-text-align:center;
+border-top:1px solid #ddd;
 font-size:14px;
+text-align:center;
 color:#888;
+page-break-inside: avoid;
 ">
 
 Página <span class="pageNumber"></span>
 
 <br/>
 
-© ${new Date().getFullYear()}  
+© ${new Date().getFullYear()}
 ${author}
 
 </footer>
