@@ -2,7 +2,7 @@ export async function POST(req: Request) {
 
   try {
 
-    console.log("📩 /api/titles chamado");
+    console.log("📩 Gerando títulos");
 
     const { topic } =
       await req.json();
@@ -14,24 +14,24 @@ export async function POST(req: Request) {
 
       return Response.json({
         error: "API Key não encontrada"
-      }, { status: 500 });
+      });
 
     }
 
     const prompt = `
 
-Crie 7 títulos de ebook
-altamente vendáveis.
+Crie exatamente 7 títulos
+para um ebook.
 
 Tema:
 ${topic}
 
-Retorne apenas lista numerada.
+Regras:
 
-Exemplo:
-
-1. Como Ganhar Dinheiro com IA
-2. O Método SaaS Milionário
+- Exatamente 7 títulos
+- Lista numerada
+- Um por linha
+- Sem explicação
 
 `;
 
@@ -57,6 +57,10 @@ Exemplo:
             model:
               "google/gemini-2.5-pro",
 
+            temperature: 0.9,
+
+            max_tokens: 500,
+
             messages: [
 
               {
@@ -64,9 +68,7 @@ Exemplo:
                 content: prompt
               }
 
-            ],
-
-            max_tokens: 500
+            ]
 
           })
 
@@ -77,21 +79,60 @@ Exemplo:
     const data =
       await response.json();
 
+    console.log("📦 RAW:", data);
+
     if (!data.choices) {
 
-      console.log(data);
-
       return Response.json({
-        error: "Erro ao gerar títulos"
+        error: "Sem resposta do modelo"
       });
+
+    }
+
+    /* 🧠 CORREÇÃO GEMINI */
+
+    let content =
+      data.choices[0]
+        .message.content;
+
+    if (Array.isArray(content)) {
+
+      content =
+        content
+          .map(c => c.text || "")
+          .join("\n");
+
+    }
+
+    /* 🧠 GARANTIR LINHAS */
+
+    let lines =
+      content
+        .split("\n")
+        .filter(l =>
+          l.trim().length > 3
+        );
+
+    /* fallback */
+
+    if (lines.length < 7) {
+
+      lines = [
+        "1. O Guia Completo do Tema",
+        "2. Como Lucrar com Esse Método",
+        "3. Estratégias que Funcionam",
+        "4. O Manual Prático",
+        "5. Como Escalar Resultados",
+        "6. O Método Avançado",
+        "7. O Futuro do Mercado"
+      ];
 
     }
 
     return Response.json({
 
       titles:
-        data.choices[0]
-          .message.content
+        lines.join("\n")
 
     });
 

@@ -2,7 +2,7 @@ export async function POST(req: Request) {
 
   try {
 
-    console.log("📘 /api/generate chamado");
+    console.log("📘 Gerando ebook");
 
     const {
       topic,
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     const prompt = `
 
-Crie um pequeno ebook em HTML.
+Crie um ebook profissional em HTML.
 
 Tema:
 ${topic}
@@ -36,15 +36,22 @@ ${author}
 
 Criar:
 
-- Introdução
-- 3 capítulos
-- Conclusão
+<h1>Introdução</h1>
+4 parágrafos
 
-Usar:
+<h2>Capítulo 1</h2>
+3 parágrafos
 
-<h1>
-<h2>
-<p>
+<h2>Capítulo 2</h2>
+3 parágrafos
+
+<h2>Capítulo 3</h2>
+3 parágrafos
+
+<h2>Conclusão</h2>
+3 parágrafos
+
+Usar apenas HTML básico.
 
 `;
 
@@ -70,6 +77,10 @@ Usar:
             model:
               "google/gemini-2.5-pro",
 
+            temperature: 0.7,
+
+            max_tokens: 6000,
+
             messages: [
 
               {
@@ -77,9 +88,7 @@ Usar:
                 content: prompt
               }
 
-            ],
-
-            max_tokens: 3000
+            ]
 
           })
 
@@ -90,9 +99,9 @@ Usar:
     const data =
       await response.json();
 
-    if (!data.choices) {
+    console.log("📦 RAW:", data);
 
-      console.log(data);
+    if (!data.choices) {
 
       return Response.json({
         error: "Erro ao gerar ebook"
@@ -100,11 +109,25 @@ Usar:
 
     }
 
+    /* 🧠 CORREÇÃO GEMINI */
+
+    let content =
+      data.choices[0]
+        .message.content;
+
+    if (Array.isArray(content)) {
+
+      content =
+        content
+          .map(c => c.text || "")
+          .join("\n");
+
+    }
+
     return Response.json({
 
       ebook:
-        data.choices[0]
-          .message.content
+        content
 
     });
 
