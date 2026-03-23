@@ -67,12 +67,13 @@ export default function Home() {
 
       }
 
-      /* 🧠 LIMPAR TEXTO */
+      /* 🧠 LIMPEZA CORRETA */
 
       let cleanTitles =
         data.titles
           .replace(/Claro!.*?:/gi, "")
           .replace(/Aqui estão.*?:/gi, "")
+          .replace(/\*\*/g, "")
           .trim();
 
       setTitles(cleanTitles);
@@ -427,8 +428,6 @@ export default function Home() {
 
             Baixar Ebook HTML
           </button>
-
-          {/* PREVIEW */}
 
           <div
 
