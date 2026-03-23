@@ -2,67 +2,38 @@ export async function POST(req: Request) {
 
   try {
 
-    console.log("📩 Requisição recebida em /api/titles");
+    console.log("📩 /api/titles chamado");
 
-    const body = await req.json();
-
-    const topic = body.topic;
-
-    if (!topic) {
-
-      return Response.json({
-        error: "Tema não enviado"
-      }, { status: 400 });
-
-    }
+    const { topic } =
+      await req.json();
 
     const apiKey =
       process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
 
-      console.error(
-        "❌ OPENROUTER_API_KEY não encontrada"
-      );
-
       return Response.json({
-        error:
-          "API Key não configurada"
+        error: "API Key não encontrada"
       }, { status: 500 });
 
     }
 
-    /* 🎯 PROMPT PROFISSIONAL */
-
     const prompt = `
 
 Crie 7 títulos de ebook
-altamente vendáveis
-no estilo BESTSELLER.
+altamente vendáveis.
 
 Tema:
 ${topic}
 
-Regras:
-
-- títulos curtos
-- altamente persuasivos
-- com curiosidade
-- estilo Hotmart
-- foco em vendas
-
-Retorne:
-
-Lista numerada.
+Retorne apenas lista numerada.
 
 Exemplo:
 
 1. Como Ganhar Dinheiro com IA
-2. O Método Oculto do SaaS
+2. O Método SaaS Milionário
 
 `;
-
-    /* 🚀 CHAMADA API */
 
     const response =
       await fetch(
@@ -86,10 +57,6 @@ Exemplo:
             model:
               "google/gemini-2.5-pro",
 
-            temperature: 0.8,
-
-            max_tokens: 500,
-
             messages: [
 
               {
@@ -97,7 +64,9 @@ Exemplo:
                 content: prompt
               }
 
-            ]
+            ],
+
+            max_tokens: 500
 
           })
 
@@ -108,23 +77,21 @@ Exemplo:
     const data =
       await response.json();
 
-    console.log("📦 Resposta OpenRouter:", data);
-
     if (!data.choices) {
 
+      console.log(data);
+
       return Response.json({
-        error: data
-      }, { status: 500 });
+        error: "Erro ao gerar títulos"
+      });
 
     }
 
-    const titles =
-      data.choices[0]
-        .message.content;
-
     return Response.json({
 
-      titles
+      titles:
+        data.choices[0]
+          .message.content
 
     });
 
@@ -132,17 +99,14 @@ Exemplo:
 
   catch (error: any) {
 
-    console.error(
-      "❌ Erro interno:",
-      error
-    );
+    console.error(error);
 
     return Response.json({
 
       error:
         error.message
 
-    }, { status: 500 });
+    });
 
   }
 
