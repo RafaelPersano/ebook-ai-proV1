@@ -20,33 +20,160 @@ export async function POST(req: Request) {
 
     }
 
-    /* 📘 PROMPT DO EBOOK */
+    /* 🎯 PROMPT PROFISSIONAL PROFUNDO */
 
-    const ebookPrompt = `
+    const prompt = `
 
-Crie um ebook profissional completo.
+Crie um ebook PROFISSIONAL profundo,
+com conteúdo consistente e vendável.
 
-TEMA:
+Tema:
 ${topic}
 
-Criar:
+Autor:
+${author}
 
-✔ Sumário  
-✔ Introdução  
-✔ 6 capítulos  
-✔ mínimo 3 parágrafos por capítulo  
-✔ pesquisa de mercado atualizada  
-✔ estudo de caso  
-✔ tabela financeira  
-✔ gráfico SVG  
-✔ conclusão  
-✔ bibliografia  
+Título:
+${title}
 
-Formato HTML.
+---
 
-Cada capítulo deve começar com:
+OBJETIVO:
 
-<h2>Capítulo X - Título</h2>
+Criar um ebook realista,
+com densidade de conteúdo,
+como um produto vendido na Hotmart.
+
+---
+
+ESTRUTURA OBRIGATÓRIA:
+
+1️⃣ SUMÁRIO
+
+Criar lista estruturada:
+
+Introdução  
+Capítulo 1  
+Capítulo 2  
+Capítulo 3  
+Capítulo 4  
+Capítulo 5  
+Capítulo 6  
+Conclusão  
+Bibliografia  
+
+---
+
+2️⃣ INTRODUÇÃO
+
+Criar 4 parágrafos longos.
+
+Explicar:
+
+- cenário atual do mercado
+- crescimento do setor
+- oportunidades reais
+- impacto econômico
+
+Usar dados plausíveis.
+
+---
+
+3️⃣ CAPÍTULOS
+
+Criar 6 capítulos completos.
+
+Cada capítulo deve conter:
+
+✔ mínimo 3 parágrafos longos  
+✔ entre 180 e 250 palavras cada  
+
+Cada capítulo deve incluir:
+
+- explicação aprofundada
+- análise estratégica
+- exemplo realista
+- estudo de caso
+- contexto de mercado
+- tendências recentes
+
+Evitar conteúdo superficial.
+
+Criar narrativa contínua.
+
+Cada capítulo deve evoluir
+sobre o anterior.
+
+---
+
+4️⃣ TABELAS FINANCEIRAS
+
+Criar tabelas com:
+
+- investimento inicial
+- custo operacional
+- receita estimada
+- lucro projetado
+
+Formato:
+
+<table>
+<tr><th>Item</th><th>Valor</th></tr>
+<tr><td>Investimento</td><td>R$ 15.000</td></tr>
+</table>
+
+---
+
+5️⃣ GRÁFICOS SVG
+
+Criar gráficos mostrando:
+
+- crescimento do mercado
+- projeção de receita
+
+Usar SVG simples.
+
+---
+
+6️⃣ CONCLUSÃO
+
+Criar 3 parágrafos longos.
+
+Mostrar:
+
+- visão futura
+- oportunidades
+- recomendações práticas
+
+---
+
+7️⃣ BIBLIOGRAFIA
+
+Criar lista baseada em:
+
+- relatórios empresariais
+- estudos de mercado
+- análises estratégicas
+
+---
+
+FORMATO:
+
+Retornar HTML PROFISSIONAL.
+
+Usar:
+
+<h1>
+<h2>
+<p>
+<table>
+<svg>
+
+Cada capítulo deve ser consistente,
+coerente
+e aprofundado.
+
+Escrever como especialista.
 
 `;
 
@@ -76,13 +203,13 @@ Cada capítulo deve começar com:
 
             temperature: 0.7,
 
-            max_tokens: 12000,
+            max_tokens: 14000,
 
             messages: [
 
               {
                 role: "user",
-                content: ebookPrompt
+                content: prompt
               }
 
             ]
@@ -108,7 +235,7 @@ Cada capítulo deve começar com:
       textData.choices[0]
         .message.content;
 
-    /* 🎨 GERAR CAPA */
+    /* 🎨 CAPA */
 
     const coverPrompt = `
 
@@ -120,10 +247,8 @@ ${topic}
 Style:
 Modern business book cover.
 
-Clean typography.
-Professional layout.
 Minimalist.
-High contrast.
+Professional typography.
 
 `;
 
@@ -167,7 +292,7 @@ High contrast.
     const coverUrl =
       coverData?.data?.[0]?.url;
 
-    /* 🖼 GERAR ILUSTRAÇÕES DOS CAPÍTULOS */
+    /* 🖼 ILUSTRAÇÕES */
 
     const chapterImages = [];
 
@@ -182,8 +307,7 @@ Chapter ${i}
 Topic:
 ${topic}
 
-Minimalist vector style.
-Modern book illustration.
+Minimalist style.
 
 `;
 
@@ -231,7 +355,7 @@ Modern book illustration.
 
     }
 
-    /* 🧠 INSERIR IMAGENS NOS CAPÍTULOS */
+    /* INSERIR IMAGENS */
 
     chapterImages.forEach(
       (img, index) => {
@@ -296,6 +420,20 @@ margin: 30px 0;
 p {
 
 text-align: justify;
+
+}
+
+table {
+
+width: 100%;
+border-collapse: collapse;
+
+}
+
+td, th {
+
+border: 1px solid #ccc;
+padding: 10px;
 
 }
 
