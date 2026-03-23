@@ -2,10 +2,11 @@ export async function POST(req: Request) {
 
   try {
 
+    console.log("📘 Gerando Ebook...");
+
     const {
       topic,
       author,
-      style,
       title
     } = await req.json();
 
@@ -15,165 +16,140 @@ export async function POST(req: Request) {
     if (!apiKey) {
 
       return Response.json({
+
         error: "API Key não encontrada"
-      });
+
+      }, { status: 500 });
 
     }
 
-    /* 🎯 PROMPT PROFISSIONAL PROFUNDO */
+    /* 🧠 PROMPT PROFISSIONAL REAL */
 
     const prompt = `
 
-Crie um ebook PROFISSIONAL profundo,
-com conteúdo consistente e vendável.
+Crie um ebook PROFISSIONAL e profundo.
 
 Tema:
 ${topic}
 
-Autor:
-${author}
-
 Título:
 ${title}
 
----
+Autor:
+${author}
 
 OBJETIVO:
 
-Criar um ebook realista,
-com densidade de conteúdo,
-como um produto vendido na Hotmart.
+Criar um ebook vendável
+no estilo Hotmart.
 
----
+ESTRUTURA:
 
-ESTRUTURA OBRIGATÓRIA:
-
-1️⃣ SUMÁRIO
-
-Criar lista estruturada:
-
-Introdução  
-Capítulo 1  
-Capítulo 2  
-Capítulo 3  
-Capítulo 4  
-Capítulo 5  
-Capítulo 6  
-Conclusão  
-Bibliografia  
-
----
-
-2️⃣ INTRODUÇÃO
+<h1>Introdução</h1>
 
 Criar 4 parágrafos longos.
 
-Explicar:
-
-- cenário atual do mercado
-- crescimento do setor
-- oportunidades reais
-- impacto econômico
-
-Usar dados plausíveis.
+Cada parágrafo com
+mínimo 180 palavras.
 
 ---
 
-3️⃣ CAPÍTULOS
+<h2>Capítulo 1</h2>
 
-Criar 6 capítulos completos.
+Criar 3 parágrafos longos.
 
-Cada capítulo deve conter:
+Incluir:
 
-✔ mínimo 3 parágrafos longos  
-✔ entre 180 e 250 palavras cada  
-
-Cada capítulo deve incluir:
-
-- explicação aprofundada
-- análise estratégica
 - exemplo realista
-- estudo de caso
-- contexto de mercado
-- tendências recentes
-
-Evitar conteúdo superficial.
-
-Criar narrativa contínua.
-
-Cada capítulo deve evoluir
-sobre o anterior.
+- estratégia prática
 
 ---
 
-4️⃣ TABELAS FINANCEIRAS
+<h2>Capítulo 2</h2>
 
-Criar tabelas com:
+Criar 3 parágrafos longos.
 
-- investimento inicial
-- custo operacional
-- receita estimada
-- lucro projetado
+Incluir:
 
-Formato:
+- estudo de caso
+- análise de mercado
+
+---
+
+<h2>Capítulo 3</h2>
+
+Criar 3 parágrafos longos.
+
+Incluir:
+
+- crescimento do setor
+- oportunidades
+
+---
+
+<h2>Capítulo 4</h2>
+
+Criar 3 parágrafos longos.
+
+Incluir:
+
+- custos
+- estrutura operacional
+
+---
+
+<h2>Capítulo 5</h2>
+
+Criar 3 parágrafos longos.
+
+Incluir:
+
+- marketing
+- vendas
+
+---
+
+<h2>Capítulo 6</h2>
+
+Criar 3 parágrafos longos.
+
+Incluir:
+
+- escala
+- crescimento
+
+---
+
+<h2>Tabela Financeira</h2>
+
+Criar tabela HTML:
 
 <table>
-<tr><th>Item</th><th>Valor</th></tr>
-<tr><td>Investimento</td><td>R$ 15.000</td></tr>
+<tr>
+<th>Item</th>
+<th>Valor</th>
+</tr>
+<tr>
+<td>Investimento Inicial</td>
+<td>R$ 15.000</td>
+</tr>
+<tr>
+<td>Receita Mensal</td>
+<td>R$ 8.000</td>
+</tr>
+<tr>
+<td>Lucro Estimado</td>
+<td>R$ 5.000</td>
+</tr>
 </table>
 
 ---
 
-5️⃣ GRÁFICOS SVG
-
-Criar gráficos mostrando:
-
-- crescimento do mercado
-- projeção de receita
-
-Usar SVG simples.
-
----
-
-6️⃣ CONCLUSÃO
+<h2>Conclusão</h2>
 
 Criar 3 parágrafos longos.
 
-Mostrar:
-
-- visão futura
-- oportunidades
-- recomendações práticas
-
----
-
-7️⃣ BIBLIOGRAFIA
-
-Criar lista baseada em:
-
-- relatórios empresariais
-- estudos de mercado
-- análises estratégicas
-
----
-
-FORMATO:
-
-Retornar HTML PROFISSIONAL.
-
-Usar:
-
-<h1>
-<h2>
-<p>
-<table>
-<svg>
-
-Cada capítulo deve ser consistente,
-coerente
-e aprofundado.
-
-Escrever como especialista.
+Mostrar visão futura.
 
 `;
 
@@ -203,7 +179,7 @@ Escrever como especialista.
 
             temperature: 0.7,
 
-            max_tokens: 14000,
+            max_tokens: 9000,
 
             messages: [
 
@@ -225,93 +201,32 @@ Escrever como especialista.
 
     if (!textData.choices) {
 
+      console.error(textData);
+
       return Response.json({
-        error: textData
+
+        error: "Erro ao gerar texto"
+
       });
 
     }
 
     let ebookHTML =
-      textData.choices[0]
-        .message.content;
+      textData
+        .choices[0]
+        .message
+        .content;
 
-    /* 🎨 CAPA */
+    console.log("✅ Texto gerado");
 
-    const coverPrompt = `
+    /* 🎨 GERAR CAPA */
 
-Professional ebook cover.
+    let coverUrl =
+      "https://placehold.co/1024x1792/png";
 
-Topic:
-${topic}
+    try {
 
-Style:
-Modern business book cover.
-
-Minimalist.
-Professional typography.
-
-`;
-
-    const coverResponse =
-      await fetch(
-        "https://openrouter.ai/api/v1/images/generations",
-        {
-
-          method: "POST",
-
-          headers: {
-
-            Authorization:
-              `Bearer ${apiKey}`,
-
-            "Content-Type":
-              "application/json"
-
-          },
-
-          body: JSON.stringify({
-
-            model:
-              "google/gemini-2.0-flash-exp-image",
-
-            prompt:
-              coverPrompt,
-
-            size:
-              "1024x1792"
-
-          })
-
-        }
-
-      );
-
-    const coverData =
-      await coverResponse.json();
-
-    const coverUrl =
-      coverData?.data?.[0]?.url;
-
-    /* 🖼 ILUSTRAÇÕES */
-
-    const chapterImages = [];
-
-    for (let i = 1; i <= 6; i++) {
-
-      const imgPrompt = `
-
-Professional vector illustration.
-
-Chapter ${i}
-
-Topic:
-${topic}
-
-Minimalist style.
-
-`;
-
-      const imgResponse =
+      const coverResponse =
         await fetch(
           "https://openrouter.ai/api/v1/images/generations",
           {
@@ -334,10 +249,10 @@ Minimalist style.
                 "google/gemini-2.0-flash-exp-image",
 
               prompt:
-                imgPrompt,
+                `Professional ebook cover about ${topic}`,
 
               size:
-                "1024x1024"
+                "1024x1792"
 
             })
 
@@ -345,43 +260,105 @@ Minimalist style.
 
         );
 
-      const imgData =
-        await imgResponse.json();
+      const coverData =
+        await coverResponse.json();
 
-      const imageUrl =
-        imgData?.data?.[0]?.url;
+      if (coverData?.data?.[0]?.url) {
 
-      chapterImages.push(imageUrl);
+        coverUrl =
+          coverData.data[0].url;
+
+      }
 
     }
 
-    /* INSERIR IMAGENS */
+    catch (err) {
 
-    chapterImages.forEach(
-      (img, index) => {
+      console.log(
+        "⚠️ Capa não gerada — usando placeholder"
+      );
 
-        const regex =
-          new RegExp(
-            `<h2>Capítulo ${index + 1}[^<]*</h2>`
+    }
+
+    /* 🖼 ILUSTRAÇÕES */
+
+    for (let i = 1; i <= 6; i++) {
+
+      try {
+
+        const imgResponse =
+          await fetch(
+            "https://openrouter.ai/api/v1/images/generations",
+            {
+
+              method: "POST",
+
+              headers: {
+
+                Authorization:
+                  `Bearer ${apiKey}`,
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body: JSON.stringify({
+
+                model:
+                  "google/gemini-2.0-flash-exp-image",
+
+                prompt:
+                  `Illustration for Chapter ${i} about ${topic}`,
+
+                size:
+                  "1024x1024"
+
+              })
+
+            }
+
           );
 
-        ebookHTML =
-          ebookHTML.replace(
+        const imgData =
+          await imgResponse.json();
 
-            regex,
+        const imgUrl =
+          imgData?.data?.[0]?.url;
 
-            `<h2>Capítulo ${index + 1}</h2>
-             <img src="${img}"
-             style="width:100%;
-             margin:30px 0;
-             border-radius:12px;" />`
+        if (imgUrl) {
 
-          );
+          const regex =
+            new RegExp(
+              `<h2>Capítulo ${i}[^<]*</h2>`
+            );
+
+          ebookHTML =
+            ebookHTML.replace(
+
+              regex,
+
+              `<h2>Capítulo ${i}</h2>
+               <img src="${imgUrl}"
+               style="width:100%;margin:25px 0;border-radius:12px;" />`
+
+            );
+
+        }
 
       }
-    );
 
-    /* 📘 LAYOUT FINAL */
+      catch {
+
+        console.log(
+          `⚠️ Falha imagem capítulo ${i}`
+        );
+
+      }
+
+    }
+
+    /* 📘 HTML FINAL */
 
     const finalHTML = `
 
@@ -428,6 +405,8 @@ table {
 width: 100%;
 border-collapse: collapse;
 
+margin-top:20px;
+
 }
 
 td, th {
@@ -440,11 +419,7 @@ padding: 10px;
 </style>
 
 <img src="${coverUrl}"
-style="
-width:100%;
-margin-bottom:40px;
-border-radius:14px;
-"
+style="width:100%;margin-bottom:40px;border-radius:14px;"
 />
 
 <h1>${title}</h1>
@@ -457,6 +432,8 @@ ${ebookHTML}
 
 `;
 
+    console.log("✅ Ebook pronto");
+
     return Response.json({
 
       ebook: finalHTML
@@ -466,6 +443,8 @@ ${ebookHTML}
   }
 
   catch (error: any) {
+
+    console.error(error);
 
     return Response.json({
 
