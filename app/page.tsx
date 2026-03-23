@@ -4,198 +4,453 @@ import { useState } from "react";
 
 export default function Home() {
 
-  const [topic, setTopic] = useState("");
-  const [author, setAuthor] = useState("");
-  const [style, setStyle] = useState("business");
-  const [titles, setTitles] = useState("");
-  const [ebook, setEbook] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [topic, setTopic] =
+    useState("");
 
-  async function generateTitles() {
+  const [author, setAuthor] =
+    useState("Autor Independente");
 
-    setLoading(true);
+  const [titles, setTitles] =
+    useState("");
 
-    const res = await fetch("/api/titles", {
-      method: "POST",
-      body: JSON.stringify({ topic })
-    });
+  const [selectedTitle, setSelectedTitle] =
+    useState("");
 
-    const data = await res.json();
+  const [ebook, setEbook] =
+    useState("");
 
-    setTitles(data.titles);
+  const [loadingTitles, setLoadingTitles] =
+    useState(false);
 
-    setLoading(false);
-  }
+  const [loadingEbook, setLoadingEbook] =
+    useState(false);
 
-  async function generateEbook() {
+  /* 🎯 GERAR TÍTULOS */
 
-    setLoading(true);
+  const generateTitles = async () => {
 
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      body: JSON.stringify({
-        topic,
-        author,
-        style,
-        title: titles
-      })
-    });
+    try {
 
-    const data = await res.json();
+      if (!topic) {
 
-    setEbook(data.ebook);
+        alert("Digite um tema primeiro");
 
-    setLoading(false);
-  }
+        return;
 
-  function exportPDF() {
-
-    const element =
-      document.getElementById("ebook");
-
-    const opt = {
-      margin: 10,
-      filename: "ebook-profissional.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: {
-        unit: "mm",
-        format: "a4",
-        orientation: "portrait"
       }
-    };
 
-    // @ts-ignore
-    html2pdf().set(opt).from(element).save();
-  }
+      setLoadingTitles(true);
+
+      const res =
+        await fetch("/api/titles", {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            topic
+          })
+
+        });
+
+      const data =
+        await res.json();
+
+      if (data.error) {
+
+        alert(data.error);
+
+        return;
+
+      }
+
+      /* 🧠 LIMPAR TEXTO */
+
+      let cleanTitles =
+        data.titles
+          .replace(/Claro!.*?:/gi, "")
+          .replace(/Aqui estão.*?:/gi, "")
+          .trim();
+
+      setTitles(cleanTitles);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      alert("Erro ao gerar títulos");
+
+    }
+
+    finally {
+
+      setLoadingTitles(false);
+
+    }
+
+  };
+
+  /* 📘 GERAR EBOOK */
+
+  const generateEbook = async () => {
+
+    try {
+
+      if (!selectedTitle) {
+
+        alert("Escolha um título");
+
+        return;
+
+      }
+
+      setLoadingEbook(true);
+
+      const res =
+        await fetch("/api/generate", {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+
+            topic,
+            author,
+            title: selectedTitle,
+            style: "business"
+
+          })
+
+        });
+
+      const data =
+        await res.json();
+
+      if (data.error) {
+
+        alert(data.error);
+
+        return;
+
+      }
+
+      setEbook(data.ebook);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      alert("Erro ao gerar ebook");
+
+    }
+
+    finally {
+
+      setLoadingEbook(false);
+
+    }
+
+  };
+
+  /* 📥 DOWNLOAD HTML */
+
+  const downloadHTML = () => {
+
+    const blob =
+      new Blob([ebook], {
+
+        type: "text/html"
+
+      });
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      "ebook.html";
+
+    a.click();
+
+  };
 
   return (
 
-    <main style={{ padding: 40 }}>
+    <main
+      style={{
 
-      <h1>📚 Gerador Profissional de Ebook</h1>
+        maxWidth: "900px",
 
-      <input
-        placeholder="Tema do Ebook"
-        value={topic}
-        onChange={(e) =>
-          setTopic(e.target.value)
-        }
-        style={{
-          width: "100%",
-          padding: 12,
-          marginTop: 10
-        }}
-      />
+        margin: "40px auto",
 
-      <input
-        placeholder="Nome do Autor"
-        value={author}
-        onChange={(e) =>
-          setAuthor(e.target.value)
-        }
-        style={{
-          width: "100%",
-          padding: 12,
-          marginTop: 10
-        }}
-      />
+        fontFamily: "Arial"
 
-      {/* ESTILO EDITORIAL */}
+      }}
+    >
 
-      <select
-        value={style}
-        onChange={(e) =>
-          setStyle(e.target.value)
-        }
-        style={{
-          width: "100%",
-          padding: 12,
-          marginTop: 10
-        }}
-      >
+      <h1>
+        Gerador Profissional de Ebook
+      </h1>
 
-        <option value="business">
-          Business (Executivo)
-        </option>
+      {/* TEMA */}
 
-        <option value="modern">
-          Moderno
-        </option>
+      <div>
 
-        <option value="academic">
-          Acadêmico
-        </option>
+        <label>
+          Tema do Ebook:
+        </label>
 
-      </select>
+        <input
+
+          type="text"
+
+          value={topic}
+
+          onChange={(e) =>
+            setTopic(e.target.value)
+          }
+
+          style={{
+
+            width: "100%",
+
+            padding: "10px",
+
+            marginTop: "5px",
+
+            marginBottom: "15px"
+
+          }}
+
+        />
+
+      </div>
+
+      {/* AUTOR */}
+
+      <div>
+
+        <label>
+          Nome do Autor:
+        </label>
+
+        <input
+
+          type="text"
+
+          value={author}
+
+          onChange={(e) =>
+            setAuthor(e.target.value)
+          }
+
+          style={{
+
+            width: "100%",
+
+            padding: "10px",
+
+            marginTop: "5px",
+
+            marginBottom: "15px"
+
+          }}
+
+        />
+
+      </div>
+
+      {/* BOTÃO TÍTULOS */}
 
       <button
+
         onClick={generateTitles}
+
+        disabled={loadingTitles}
+
         style={{
-          marginTop: 12,
-          padding: 12
+
+          padding: "12px 20px",
+
+          fontSize: "16px",
+
+          cursor: "pointer",
+
+          marginBottom: "20px"
+
         }}
+
       >
-        🎯 Gerar Títulos
+
+        {loadingTitles
+          ? "Gerando..."
+          : "Gerar Títulos"}
+
       </button>
+
+      {/* LISTA TÍTULOS */}
 
       {titles && (
 
-        <div style={{ marginTop: 20 }}>
+        <div>
 
-          <h3>Títulos sugeridos:</h3>
+          <h2>
+            Títulos sugeridos:
+          </h2>
 
-          <pre>
-            {titles}
-          </pre>
+          <textarea
 
-          <button
-            onClick={generateEbook}
+            value={titles}
+
+            readOnly
+
             style={{
-              marginTop: 12,
-              padding: 14
+
+              width: "100%",
+
+              height: "150px",
+
+              padding: "10px"
+
+            }}
+
+          />
+
+          <label
+            style={{
+
+              marginTop: "15px",
+
+              display: "block"
+
             }}
           >
-            📖 Criar Ebook
-          </button>
+
+            Escolha um título:
+          </label>
+
+          <input
+
+            type="text"
+
+            placeholder="Cole aqui o título escolhido"
+
+            value={selectedTitle}
+
+            onChange={(e) =>
+              setSelectedTitle(
+                e.target.value
+              )
+            }
+
+            style={{
+
+              width: "100%",
+
+              padding: "10px",
+
+              marginTop: "5px"
+
+            }}
+
+          />
 
         </div>
 
       )}
 
-      {loading && <p>Gerando conteúdo...</p>}
+      {/* GERAR EBOOK */}
 
-      {ebook && (
+      {selectedTitle && (
 
-        <>
+        <button
 
-          <button
-            onClick={exportPDF}
-            style={{
-              marginTop: 20,
-              padding: 14,
-              background: "#000",
-              color: "#fff"
-            }}
-          >
-            📄 Exportar PDF
-          </button>
+          onClick={generateEbook}
 
-          <div
-            id="ebook"
-            style={{
-              marginTop: 40
-            }}
-            dangerouslySetInnerHTML={{
-              __html: ebook
-            }}
-          />
+          disabled={loadingEbook}
 
-        </>
+          style={{
+
+            padding: "12px 20px",
+
+            fontSize: "16px",
+
+            marginTop: "20px"
+
+          }}
+
+        >
+
+          {loadingEbook
+            ? "Gerando Ebook..."
+            : "Gerar Ebook"}
+
+        </button>
 
       )}
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+      {/* DOWNLOAD */}
+
+      {ebook && (
+
+        <div>
+
+          <button
+
+            onClick={downloadHTML}
+
+            style={{
+
+              padding: "12px 20px",
+
+              fontSize: "16px",
+
+              marginTop: "20px"
+
+            }}
+
+          >
+
+            Baixar Ebook HTML
+          </button>
+
+          {/* PREVIEW */}
+
+          <div
+
+            style={{
+
+              marginTop: "40px",
+
+              border: "1px solid #ccc",
+
+              padding: "20px"
+
+            }}
+
+            dangerouslySetInnerHTML={{
+              __html: ebook
+            }}
+
+          />
+
+        </div>
+
+      )}
 
     </main>
 
